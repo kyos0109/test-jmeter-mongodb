@@ -50,7 +50,12 @@
           </elementProp>
           <elementProp name="insertLoopTimes" elementType="Argument">
             <stringProp name="Argument.name">insertLoopTimes</stringProp>
-            <stringProp name="Argument.value">10000</stringProp>
+            <stringProp name="Argument.value">1000</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="garbageLoop" elementType="Argument">
+            <stringProp name="Argument.name">garbageLoop</stringProp>
+            <stringProp name="Argument.value">100000</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>
@@ -228,6 +233,7 @@ catch (Exception e) {
             <stringProp name="script">import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Indexes;
 
 import org.bson.Document;
 
@@ -240,6 +246,8 @@ try {
     MongoDatabase database = mongoClient.getDatabase(databaseName);
 
     MongoCollection&lt;Document&gt; collection = database.getCollection(collectionName)
+
+    collection.createIndex(Indexes.text(&quot;firstName&quot;));
 
     vars.putObject(&quot;collection&quot;, collection);
     vars.putObject(&quot;databaseApi&quot;, database);
@@ -257,6 +265,50 @@ catch (Exception e) {
           <hashTree/>
           <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="Write to Data" enabled="true"/>
           <hashTree>
+            <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Insert Garbage Data" enabled="true">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="script">import com.mongodb.client.MongoCollection;
+import com.mongodb.DBObject;
+
+import org.bson.Document;
+
+import java.util.List;
+import java.util.Arrays;
+
+import org.apache.commons.lang.RandomStringUtils
+
+int garbageLoop = vars.get(&quot;garbageLoop&quot;).toInteger()
+
+try {
+	MongoCollection&lt;Document&gt; collection = vars.getObject(&quot;collection&quot;);
+
+	List&lt;Document&gt; documentList = new ArrayList&lt;&gt;();
+	1.upto(garbageLoop) {
+		documentList.add(new Document(&quot;firstName&quot;, RandomStringUtils.randomAlphanumeric(32))
+		.append(&quot;lastName&quot;, &quot;Protocolson&quot;)
+		.append(&quot;age&quot;, 37)
+		.append(&quot;occupation&quot;, &quot;DevOps&quot;)
+		.append(&quot;skills&quot;, Arrays.asList(&quot;System Administration&quot;, &quot;Linux&quot;))
+		.append(&quot;adress&quot;, new Document(&quot;city&quot;, &quot;Systemberg&quot;)
+			.append(&quot;street&quot;, &quot;Data Line&quot;)
+			.append(&quot;house&quot;, 42))
+		);
+	}
+
+	collection.insertMany(documentList);
+
+	return &quot;Create garbageData Count: &quot; + collection.count();
+}
+catch (Exception e) {
+	SampleResult.setSuccessful(false);
+	SampleResult.setResponseCode(&quot;500&quot;);
+	SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+            </JSR223Sampler>
+            <hashTree/>
             <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
               <boolProp name="LoopController.continue_forever">true</boolProp>
               <stringProp name="LoopController.loops">${insertLoopTimes}</stringProp>
@@ -306,7 +358,6 @@ catch (Exception e) {
                 <stringProp name="script">import com.mongodb.client.MongoCollection;
 import org.bson.Document;
 import com.mongodb.BasicDBObject;
-import com.mongodb.DBCursor;
 
 try {
 	MongoCollection&lt;Document&gt; collection = vars.getObject(&quot;collection&quot;);
@@ -333,7 +384,6 @@ catch (Exception e) {
                 <stringProp name="script">import com.mongodb.client.MongoCollection;
 import org.bson.Document;
 import com.mongodb.BasicDBObject;
-import com.mongodb.DBCursor;
 
 try {
 	MongoCollection&lt;Document&gt; collection = vars.getObject(&quot;collection&quot;);
