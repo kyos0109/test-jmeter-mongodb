@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.2.1">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="TestMongoDB" enabled="true">
+      <stringProp name="TestPlan.comments"></stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="mongoHost" elementType="Argument">
+            <stringProp name="Argument.name">mongoHost</stringProp>
+            <stringProp name="Argument.value">127.0.0.1</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="mongoPort" elementType="Argument">
+            <stringProp name="Argument.name">mongoPort</stringProp>
+            <stringProp name="Argument.value">27017</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="mongoUser" elementType="Argument">
+            <stringProp name="Argument.name">mongoUser</stringProp>
+            <stringProp name="Argument.value">admin</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="password" elementType="Argument">
+            <stringProp name="Argument.name">password</stringProp>
+            <stringProp name="Argument.value">Aa123456</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="databaseName" elementType="Argument">
+            <stringProp name="Argument.name">databaseName</stringProp>
+            <stringProp name="Argument.value">admin</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="collectionName" elementType="Argument">
+            <stringProp name="Argument.name">collectionName</stringProp>
+            <stringProp name="Argument.value">happyGo</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="apiUser" elementType="Argument">
+            <stringProp name="Argument.name">apiUser</stringProp>
+            <stringProp name="Argument.value">happier</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="testDB" elementType="Argument">
+            <stringProp name="Argument.name">testDB</stringProp>
+            <stringProp name="Argument.value">happy</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+        </collectionProp>
+      </elementProp>
+      <stringProp name="TestPlan.user_define_classpath"></stringProp>
+    </TestPlan>
+    <hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">1</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">1</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.duration"></stringProp>
+        <stringProp name="ThreadGroup.delay"></stringProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+      </ThreadGroup>
+      <hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Connection -&gt; ${mongoUser}" enabled="true">
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="script">import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoClient;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
+
+import java.util.Arrays;
+
+String mongoUser = vars.get(&quot;mongoUser&quot;)
+String userDB    = vars.get(&quot;databaseName&quot;)
+String mongoHost = vars.get(&quot;mongoHost&quot;)
+int    mongoPort = vars.get(&quot;mongoPort&quot;).toInteger()
+char[] password  = vars.get(&quot;password&quot;).toCharArray();
+
+try {
+    MongoCredential credential = MongoCredential.createCredential(mongoUser, userDB, password);
+
+    MongoClient mongoClient = MongoClients.create(
+        MongoClientSettings.builder()
+                .applyToClusterSettings{builder -&gt;
+                        builder.hosts(Arrays.asList(new ServerAddress(mongoHost, mongoPort)))}
+                .credential(credential)
+                .build());
+
+    vars.putObject(&quot;mongoClient&quot;, mongoClient);
+    
+    return &quot;Connected to &quot; + mongoHost + &quot;:&quot; + mongoPort + &quot;/&quot; + userDB;
+}
+
+catch (Exception e) {
+    SampleResult.setSuccessful(false);
+    SampleResult.setResponseCode(&quot;500&quot;);
+    SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+          <stringProp name="scriptLanguage">groovy</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Create User -&gt; ${apiUser}" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import com.mongodb.BasicDBObject;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoDatabase;
+
+String databaseName   = vars.get(&quot;testDB&quot;)
+String apiUser        = vars.get(&quot;apiUser&quot;)
+
+try {
+    MongoClient mongoClient = vars.getObject(&quot;mongoClient&quot;);
+
+    MongoDatabase database = mongoClient.getDatabase(databaseName);
+
+    BasicDBObject createUserCmd = new BasicDBObject(&quot;createUser&quot;, apiUser)
+        .append(&quot;pwd&quot;, vars.get(&quot;password&quot;))
+        .append(&quot;roles&quot;,
+        Collections.singletonList(
+            new BasicDBObject(
+            &quot;role&quot;, &quot;dbOwner&quot;).append(&quot;db&quot;, databaseName)
+    ));
+
+    database.runCommand(createUserCmd);
+
+    return &quot;Create User: &quot; + apiUser;
+
+}
+
+catch (Exception e) {
+    SampleResult.setSuccessful(false);
+    SampleResult.setResponseCode(&quot;500&quot;);
+    SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Reconnect by -&gt; ${apiUser}" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoClient;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
+
+import java.util.Arrays;
+
+String apiUser   = vars.get(&quot;apiUser&quot;)
+String testDB    = vars.get(&quot;testDB&quot;)
+String mongoHost = vars.get(&quot;mongoHost&quot;)
+int    mongoPort = vars.get(&quot;mongoPort&quot;).toInteger()
+char[] password  = vars.get(&quot;password&quot;).toCharArray();
+
+try {
+    MongoCredential credential = MongoCredential.createCredential(apiUser, testDB, password);
+
+    MongoClient mongoClient = MongoClients.create(
+        MongoClientSettings.builder()
+                .applyToClusterSettings{builder -&gt;
+                        builder.hosts(Arrays.asList(new ServerAddress(mongoHost, mongoPort)))}
+                .credential(credential)
+                .build());
+
+    vars.putObject(&quot;mongoClientApiUser&quot;, mongoClient);
+    
+    return &quot;Connected to &quot; + mongoHost + &quot;:&quot; + mongoPort + &quot;/&quot; + testDB;
+}
+
+catch (Exception e) {
+    SampleResult.setSuccessful(false);
+    SampleResult.setResponseCode(&quot;500&quot;);
+    SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Connect Collection -&gt; ${collectionName}" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+
+import org.bson.Document;
+
+String collectionName = vars.get(&quot;collectionName&quot;)
+String databaseName   = vars.get(&quot;testDB&quot;)
+
+try {
+    MongoClient mongoClient = vars.getObject(&quot;mongoClientApiUser&quot;);
+
+    MongoDatabase database = mongoClient.getDatabase(databaseName);
+
+    MongoCollection&lt;Document&gt; collection = database.getCollection(collectionName)
+
+    vars.putObject(&quot;collection&quot;, collection);
+    vars.putObject(&quot;databaseApi&quot;, database);
+
+    return &quot;Connection to : &quot; + databaseName + &quot;/&quot; + collectionName;
+
+}
+
+catch (Exception e) {
+    SampleResult.setSuccessful(false);
+    SampleResult.setResponseCode(&quot;500&quot;);
+    SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Insert Data" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import com.mongodb.client.MongoCollection;
+import org.bson.types.ObjectId
+
+import org.bson.Document;
+
+import java.util.Arrays;
+
+try {
+	MongoCollection&lt;Document&gt; collection = vars.getObject(&quot;collection&quot;);
+	
+	Document document = new Document(&quot;firstName&quot;, &quot;Expert&quot;)
+		.append(&quot;lastName&quot;, &quot;Protocolson&quot;)
+		.append(&quot;age&quot;, 37)
+		.append(&quot;occupation&quot;, &quot;DevOps&quot;)
+		.append(&quot;skills&quot;, Arrays.asList(&quot;System Administration&quot;, &quot;Linux&quot;))
+		.append(&quot;adress&quot;, new Document(&quot;city&quot;, &quot;Systemberg&quot;)
+			.append(&quot;street&quot;, &quot;Data Line&quot;)
+			.append(&quot;house&quot;, 42));
+	
+	collection.insertOne(document);
+	ObjectId id = document.getObjectId(&quot;_id&quot;);
+
+	return &quot;Document inserted --&gt; id: &quot; + id;
+}
+catch (Exception e) {
+	SampleResult.setSuccessful(false);
+	SampleResult.setResponseCode(&quot;500&quot;);
+	SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Drop Database -&gt; ${testDB}" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import com.mongodb.MongoClient;
+import com.mongodb.client.MongoDatabase;
+
+String collectionName = vars.get(&quot;collectionName&quot;)
+String databaseName   = vars.get(&quot;testDB&quot;)
+
+try {
+    MongoDatabase database = vars.getObject(&quot;databaseApi&quot;);
+    database.drop();
+
+    return &quot;Drop Database : &quot; + databaseName;
+} catch (Exception e) {
+	SampleResult.setSuccessful(false);
+	SampleResult.setResponseCode(&quot;500&quot;);
+	SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Delete User -&gt; ${apiUser}" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import com.mongodb.BasicDBObject;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoDatabase;
+
+String databaseName   = vars.get(&quot;testDB&quot;)
+String apiUser        = vars.get(&quot;apiUser&quot;)
+
+try {
+    MongoClient mongoClient = vars.getObject(&quot;mongoClient&quot;);
+
+    MongoDatabase database = mongoClient.getDatabase(databaseName);
+
+    BasicDBObject createUserCmd = new BasicDBObject(&quot;dropUser&quot;, apiUser);
+
+    database.runCommand(createUserCmd);
+
+    return &quot;Create User: &quot; + apiUser;
+
+}
+
+catch (Exception e) {
+    SampleResult.setSuccessful(false);
+    SampleResult.setResponseCode(&quot;500&quot;);
+    SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Close Connection" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import com.mongodb.client.MongoClient;
+
+import java.util.Arrays;
+
+try {
+	MongoClient mongoClient    = vars.getObject(&quot;mongoClient&quot;);
+	MongoClient mongoClientApi = vars.getObject(&quot;mongoClientApiUser&quot;);
+	
+	mongoClient.close();
+	mongoClientApi.close();
+
+	return &quot;Connection Close&quot;;
+}
+catch (Exception e) {
+	SampleResult.setSuccessful(false);
+	SampleResult.setResponseCode(&quot;500&quot;);
+	SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+        <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report" enabled="true">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+      </hashTree>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>
