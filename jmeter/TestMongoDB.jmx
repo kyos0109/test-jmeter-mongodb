@@ -50,7 +50,7 @@
           </elementProp>
           <elementProp name="insertLoopTimes" elementType="Argument">
             <stringProp name="Argument.name">insertLoopTimes</stringProp>
-            <stringProp name="Argument.value">10</stringProp>
+            <stringProp name="Argument.value">10000</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>
@@ -298,6 +298,60 @@ catch (Exception e) {
 }</stringProp>
               </JSR223Sampler>
               <hashTree/>
+              <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Fetch" enabled="true">
+                <stringProp name="scriptLanguage">groovy</stringProp>
+                <stringProp name="parameters"></stringProp>
+                <stringProp name="filename"></stringProp>
+                <stringProp name="cacheKey">true</stringProp>
+                <stringProp name="script">import com.mongodb.client.MongoCollection;
+import org.bson.Document;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBCursor;
+
+try {
+	MongoCollection&lt;Document&gt; collection = vars.getObject(&quot;collection&quot;);
+
+	BasicDBObject whereQuery = new BasicDBObject();
+	whereQuery.put(&quot;firstName&quot;, vars.get(&quot;apiUser&quot;));
+
+     def myDoc = collection.find(whereQuery)
+
+	return &quot;Fetch Document: &quot; + myDoc.toList();
+}
+catch (Exception e) {
+	SampleResult.setSuccessful(false);
+	SampleResult.setResponseCode(&quot;500&quot;);
+	SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+              </JSR223Sampler>
+              <hashTree/>
+              <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Delete" enabled="true">
+                <stringProp name="scriptLanguage">groovy</stringProp>
+                <stringProp name="parameters"></stringProp>
+                <stringProp name="filename"></stringProp>
+                <stringProp name="cacheKey">true</stringProp>
+                <stringProp name="script">import com.mongodb.client.MongoCollection;
+import org.bson.Document;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBCursor;
+
+try {
+	MongoCollection&lt;Document&gt; collection = vars.getObject(&quot;collection&quot;);
+
+	BasicDBObject whereQuery = new BasicDBObject();
+	whereQuery.put(&quot;firstName&quot;, vars.get(&quot;apiUser&quot;));
+
+     def myDoc = collection.deleteMany(whereQuery);
+
+	return &quot;Delete Document: &quot; + myDoc;
+}
+catch (Exception e) {
+	SampleResult.setSuccessful(false);
+	SampleResult.setResponseCode(&quot;500&quot;);
+	SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+              </JSR223Sampler>
+              <hashTree/>
             </hashTree>
           </hashTree>
         </hashTree>
@@ -358,6 +412,9 @@ catch (Exception e) {
 }</stringProp>
           </JSR223Sampler>
           <hashTree/>
+        </hashTree>
+        <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="Bye" enabled="true"/>
+        <hashTree>
           <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Close Connection" enabled="true">
             <stringProp name="scriptLanguage">groovy</stringProp>
             <stringProp name="parameters"></stringProp>
